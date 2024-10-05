@@ -1,11 +1,11 @@
 import { UNIFIED_RULES, PREDEFINED_RULE_SETS } from './config.js';
 
-export function generateHtml(xrayUrl, singboxUrl, clashUrl) {
+export function generateHtml(xrayUrl, singboxUrl, clashUrl, baseUrl) {
   return `
     <!DOCTYPE html>
     <html lang="en">
       ${generateHead()}
-      ${generateBody(xrayUrl, singboxUrl, clashUrl)}
+      ${generateBody(xrayUrl, singboxUrl, clashUrl, baseUrl)}
     </html>
   `;
 }
@@ -14,9 +14,16 @@ const generateHead = () => `
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sublink Worker</title>
+    <meta name="description" content="Sublink Worker是一款强大的在线订阅链接转换工具,支持V2Ray/Xray、SingBox、Clash等多种客户端，提供自定义规则和高效转换，帮助您轻松管理和优化代理节点。">
+    <meta name="keywords" content="Sublink, Worker, 订阅链接, 代理, Xray, SingBox, Clash, V2Ray, 自定义规则, 在线, 订阅转换, 机场订阅, 节点管理, 节点解析">
+    <title>Sublink Worker - 轻量高效的订阅转换工具 | 支持V2Ray/Xray、SingBox、Clash</title>
+    <meta property="og:title" content="Sublink Worker - 轻量高效的订阅链接转换工具">
+    <meta property="og:description" content="强大的在线订阅链接转换工具,支持多种代理协议和自定义规则">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sublink-worker.sageer.me/">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <style>
       ${generateStyles()}
     </style>
@@ -320,9 +327,82 @@ const generateStyles = () => `
       margin-right: 10px;
   }
 
+  .qr-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+  }
+
+  .qr-modal.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .qr-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+  }
+
+  .qr-modal.show .qr-card {
+    transform: scale(1);
+  }
+
+  .qr-card img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .qr-card p {
+    margin-top: 10px;
+    color: #333;
+    font-size: 16px;
+  }
+
+  .base-url-label {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--input-border);
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  #subscribeLinksContainer {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+  }
+
+  #subscribeLinksContainer.show {
+    max-height: 1000px;
+    opacity: 1;
+  }
+
+  #subscribeLinksContainer.hide {
+    max-height: 0;
+    opacity: 0;
+  }
+
 `;
 
-const generateBody = (xrayUrl, singboxUrl, clashUrl) => `
+const generateBody = (xrayUrl, singboxUrl, clashUrl, baseUrl) => `
   <body>
     ${generateDarkModeToggle()}
     ${generateGithubLink()}
@@ -331,7 +411,9 @@ const generateBody = (xrayUrl, singboxUrl, clashUrl) => `
         ${generateCardHeader()}
         <div class="card-body">
           ${generateForm()}
-          ${generateSubscribeLinks(xrayUrl, singboxUrl, clashUrl)}
+          <div id="subscribeLinksContainer">
+            ${generateSubscribeLinks(xrayUrl, singboxUrl, clashUrl, baseUrl)}
+          </div>
         </div>
       </div>
     </div>
@@ -370,25 +452,38 @@ const generateForm = () => `
     <div id="advancedOptions">
       ${generateRuleSetSelection()}
     </div>
-    <div class="d-grid mt-4">
-      <button type="submit" class="btn btn-primary btn-lg">
-        <i class="fas fa-sync-alt me-2"></i>Convert
-      </button>
-    </div>
-    <div class="d-grid mt-2">
-      <button type="button" class="btn btn-secondary btn-lg" id="clearFormBtn">
-        <i class="fas fa-trash-alt me-2"></i>Clear Form
-      </button>
-    </div>
+  <div class="d-flex mt-4">
+    <button type="submit" class="btn btn-primary btn-lg me-2" style="flex: 6;">
+      <i class="fas fa-sync-alt me-2"></i>Convert
+    </button>
+    <button type="button" class="btn btn-secondary btn-lg" id="clearFormBtn" style="flex: 4;">
+      <i class="fas fa-trash-alt me-2"></i>Clear
+    </button>
+  </div>
   </form>
 `;
 
-const generateSubscribeLinks = (xrayUrl, singboxUrl, clashUrl) => `
+const generateSubscribeLinks = (xrayUrl, singboxUrl, clashUrl, baseUrl) => `
   <div class="mt-5">
     <h2 class="mb-4">Your subscribe links:</h2>
     ${generateLinkInput('Xray Link:', 'xrayLink', xrayUrl)}
     ${generateLinkInput('SingBox Link:', 'singboxLink', singboxUrl)}
     ${generateLinkInput('Clash Link:', 'clashLink', clashUrl)}
+    <div class="mb-3">
+      <label for="customShortCode" class="form-label">Custom Path (optional):</label>
+      <div class="input-group flex-nowrap">
+        <span class="input-group-text text-truncate" style="max-width: 400px;" title="${baseUrl}/s/">
+          ${baseUrl}/s/
+        </span>
+        <input type="text" class="form-control" id="customShortCode" placeholder="e.g. my-custom-link">
+        <select id="savedCustomPaths" class="form-select" style="max-width: 200px;">
+          <option value="">Saved paths</option>
+        </select>
+        <button class="btn btn-outline-danger" type="button" onclick="deleteSelectedPath()">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
     <div class="d-grid">
       <button class="btn btn-primary btn-lg" type="button" onclick="shortenAllUrls()">
         <i class="fas fa-compress-alt me-2"></i>Shorten Links
@@ -406,6 +501,9 @@ const generateLinkInput = (label, id, value) => `
       <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('${id}')">
         <i class="fas fa-copy"></i>
       </button>
+      <button class="btn btn-outline-secondary" type="button" onclick="generateQRCode('${id}')">
+        <i class="fas fa-qrcode"></i>
+      </button>
     </div>
   </div>
 `;
@@ -420,7 +518,60 @@ const generateScripts = () => `
     ${tooltipFunction()}
     ${submitFormFunction()}
     ${customRuleFunctions}
+    ${generateQRCodeFunction()}
+    ${customPathFunctions()}
   </script>
+`;
+
+const customPathFunctions = () => `
+  function saveCustomPath() {
+    const customPath = document.getElementById('customShortCode').value;
+    if (customPath) {
+      let savedPaths = JSON.parse(localStorage.getItem('savedCustomPaths') || '[]');
+      if (!savedPaths.includes(customPath)) {
+        savedPaths.push(customPath);
+        localStorage.setItem('savedCustomPaths', JSON.stringify(savedPaths));
+        updateSavedPathsDropdown();
+      }
+    }
+  }
+
+  function updateSavedPathsDropdown() {
+    const savedPaths = JSON.parse(localStorage.getItem('savedCustomPaths') || '[]');
+    const dropdown = document.getElementById('savedCustomPaths');
+    dropdown.innerHTML = '<option value="">Saved paths</option>';
+    savedPaths.forEach(path => {
+      const option = document.createElement('option');
+      option.value = path;
+      option.textContent = path;
+      dropdown.appendChild(option);
+    });
+  }
+
+  function loadSavedCustomPath() {
+    const dropdown = document.getElementById('savedCustomPaths');
+    const customShortCode = document.getElementById('customShortCode');
+    if (dropdown.value) {
+      customShortCode.value = dropdown.value;
+    }
+  }
+
+  function deleteSelectedPath() {
+    const dropdown = document.getElementById('savedCustomPaths');
+    const selectedPath = dropdown.value;
+    if (selectedPath) {
+      let savedPaths = JSON.parse(localStorage.getItem('savedCustomPaths') || '[]');
+      savedPaths = savedPaths.filter(path => path !== selectedPath);
+      localStorage.setItem('savedCustomPaths', JSON.stringify(savedPaths));
+      updateSavedPathsDropdown();
+      document.getElementById('customShortCode').value = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSavedPathsDropdown();
+    document.getElementById('savedCustomPaths').addEventListener('change', loadSavedCustomPath);
+  });
 `;
 
 const advancedOptionsToggleFunction = () => `
@@ -454,11 +605,12 @@ const copyToClipboardFunction = () => `
 `;
 
 const shortenAllUrlsFunction = () => `
-  async function shortenUrl(url) {
-    const response = await fetch(\`/shorten?url=\${encodeURIComponent(url)}\`);
+  async function shortenUrl(url, customShortCode) {
+    saveCustomPath();
+    const response = await fetch(\`/shorten-v2?url=\${encodeURIComponent(url)}&shortCode=\${encodeURIComponent(customShortCode || '')}\`);
     if (response.ok) {
-      const data = await response.json();
-      return data.shortUrl;
+      const data = await response.text();
+      return data;
     }
     throw new Error('Failed to shorten URL');
   }
@@ -472,18 +624,16 @@ const shortenAllUrlsFunction = () => `
       const xrayLink = document.getElementById('xrayLink');
       const singboxLink = document.getElementById('singboxLink');
       const clashLink = document.getElementById('clashLink');
+      const customShortCode = document.getElementById('customShortCode').value;
 
-      const [xrayShortUrl, singboxShortUrl, clashShortUrl] = await Promise.all([
-        shortenUrl(xrayLink.value),
-        shortenUrl(singboxLink.value),
-        shortenUrl(clashLink.value)
-      ]);
+      const shortCode = await shortenUrl(singboxLink.value, customShortCode);
 
-      xrayLink.value = xrayShortUrl;
-      singboxLink.value = singboxShortUrl;
-      clashLink.value = clashShortUrl;
+      xrayLink.value = window.location.origin + '/x/' + shortCode;
+      singboxLink.value = window.location.origin + '/b/' + shortCode;
+      clashLink.value = window.location.origin + '/c/' + shortCode;
     } catch (error) {
       console.error('Error:', error);
+      alert('Failed to shorten URLs. Please try again.');
     } finally {
       shortenButton.disabled = false;
       shortenButton.innerHTML = '<i class="fas fa-compress-alt me-2"></i>Shorten Links';
@@ -557,6 +707,10 @@ const generateRuleSetSelection = () => `
     </div>
     <div class="mt-4">
       <h4>Custom Rules</h4>
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="crpinToggle">
+        <label class="form-check-label" for="crpinToggle">Pin Custom Rules</label>
+      </div>
       <div id="customRules">
       <!-- Custom rules will be dynamically added here -->
     </div>
@@ -621,6 +775,7 @@ const submitFormFunction = () => `
     // Save form data to localStorage
     localStorage.setItem('inputTextarea', inputString);
     localStorage.setItem('advancedToggle', document.getElementById('advancedToggle').checked);
+    localStorage.setItem('crpinToggle', document.getElementById('crpinToggle').checked);
     saveSelectedRules();
     
     let selectedRules;
@@ -631,22 +786,33 @@ const submitFormFunction = () => `
       selectedRules = Array.from(document.querySelectorAll('input[name="selectedRules"]:checked'))
         .map(checkbox => checkbox.value);
     }
+    
+    let pin = document.getElementById('crpinToggle').checked;
 
     const customRules = Array.from(document.querySelectorAll('.custom-rule')).map(rule => ({
       site: rule.querySelector('input[name="customRuleSite[]"]').value,
       ip: rule.querySelector('input[name="customRuleIP[]"]').value,
       name: rule.querySelector('input[name="customRuleName[]"]').value,
       domain_suffix: rule.querySelector('input[name="customRuleDomainSuffix[]"]').value,
+      domain_keyword: rule.querySelector('input[name="customRuleDomainKeyword[]"]').value,
       ip_cidr: rule.querySelector('input[name="customRuleIPCIDR[]"]').value
     }));
 
     const xrayUrl = \`\${window.location.origin}/xray?config=\${encodeURIComponent(inputString)}\`;
-    const singboxUrl = \`\${window.location.origin}/singbox?config=\${encodeURIComponent(inputString)}&selectedRules=\${encodeURIComponent(JSON.stringify(selectedRules))}&customRules=\${encodeURIComponent(JSON.stringify(customRules))}\`;
-    const clashUrl = \`\${window.location.origin}/clash?config=\${encodeURIComponent(inputString)}&selectedRules=\${encodeURIComponent(JSON.stringify(selectedRules))}&customRules=\${encodeURIComponent(JSON.stringify(customRules))}\`;
+    const singboxUrl = \`\${window.location.origin}/singbox?config=\${encodeURIComponent(inputString)}&selectedRules=\${encodeURIComponent(JSON.stringify(selectedRules))}&customRules=\${encodeURIComponent(JSON.stringify(customRules))}&pin=\${pin}\`;
+    const clashUrl = \`\${window.location.origin}/clash?config=\${encodeURIComponent(inputString)}&selectedRules=\${encodeURIComponent(JSON.stringify(selectedRules))}&customRules=\${encodeURIComponent(JSON.stringify(customRules))}&pin=\${pin}\`;
 
     document.getElementById('xrayLink').value = xrayUrl;
     document.getElementById('singboxLink').value = singboxUrl;
     document.getElementById('clashLink').value = clashUrl;
+
+    // Show the subscribe part
+    const subscribeLinksContainer = document.getElementById('subscribeLinksContainer');
+    subscribeLinksContainer.classList.remove('hide');
+    subscribeLinksContainer.classList.add('show');
+
+    // Scroll to the subscribe part
+    subscribeLinksContainer.scrollIntoView({ behavior: 'smooth' });
   }
 
   function loadSavedFormData() {
@@ -661,6 +827,11 @@ const submitFormFunction = () => `
       if (advancedToggle === 'true') {
         document.getElementById('advancedOptions').classList.add('show');
       }
+    }
+    
+    const savedCustomPath = localStorage.getItem('customPath');
+    if (savedCustomPath) {
+      document.getElementById('customShortCode').value = savedCustomPath;
     }
 
     loadSelectedRules();
@@ -701,6 +872,23 @@ const submitFormFunction = () => `
     document.getElementById('advancedOptions').classList.remove('show');
     document.querySelectorAll('input[name="selectedRules"]').forEach(checkbox => checkbox.checked = false);
     document.getElementById('predefinedRules').value = 'custom';
+    document.getElementById('crpinToggle').checked = false;
+
+    localStorage.removeItem('customPath');
+    document.getElementById('customShortCode').value = '';
+
+    const subscribeLinksContainer = document.getElementById('subscribeLinksContainer');
+    subscribeLinksContainer.classList.remove('show');
+    subscribeLinksContainer.classList.add('hide');
+
+    document.getElementById('xrayLink').value = '';
+    document.getElementById('singboxLink').value = '';
+    document.getElementById('clashLink').value = '';
+
+    // wait to reset the container
+    setTimeout(() => {
+      subscribeLinksContainer.classList.remove('hide');
+    }, 500);
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -748,16 +936,85 @@ const customRuleFunctions = `
         <input type="text" class="form-control mb-2" name="customRuleDomainSuffix[]" placeholder="Domain Suffix (comma separated)">
       </div>
       <div class="mb-2">
+        <label class="form-label">Domain Keyword</label>
+        <input type="text" class="form-control mb-2" name="customRuleDomainKeyword[]" placeholder="Domain Keyword (comma separated)">
+      </div>
+      <div class="mb-2">
         <label class="form-label">IP CIDR</label>
         <input type="text" class="form-control mb-2" name="customRuleIPCIDR[]" placeholder="IP CIDR (comma separated)">
-        <button type="button" class="btn btn-danger btn-sm" onclick="removeCustomRule(this)">Remove</button>
       </div>
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeCustomRule(this)">Remove</button>
     \`;
     customRulesDiv.appendChild(newRuleDiv);
   }
 
   function removeCustomRule(button) {
-    button.parentElement.remove();
-    customRuleCount--;
+    const ruleDiv = button.closest('.custom-rule');
+    if (ruleDiv) {
+      ruleDiv.remove();
+      customRuleCount--;
+    }
+  }
+`;
+
+const generateQRCodeFunction = () => `
+  function generateQRCode(id) {
+    const input = document.getElementById(id);
+    const text = input.value;
+    if (!text) {
+      alert('No link provided!');
+      return;
+    }
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+
+      const moduleCount = qr.getModuleCount();
+      const cellSize = Math.max(2, Math.min(8, Math.floor(300 / moduleCount)));
+      const margin = Math.floor(cellSize * 0.5);
+
+      const qrImage = qr.createDataURL(cellSize, margin);
+      
+      const modal = document.createElement('div');
+      modal.className = 'qr-modal';
+      modal.innerHTML = \`
+        <div class="qr-card">
+          <img src="\${qrImage}" alt="QR Code">
+          <p>Scan QR Code</p>
+        </div>
+      \`;
+
+      document.body.appendChild(modal);
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeQRModal();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeQRModal();
+        }
+      });
+
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+      });
+    } catch (error) {
+      console.error('Error in generating:', error);
+      alert('Try to use short links!');
+    }
+  }
+
+  function closeQRModal() {
+    const modal = document.querySelector('.qr-modal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.addEventListener('transitionend', () => {
+        document.body.removeChild(modal);
+      }, { once: true });
+    }
   }
 `;

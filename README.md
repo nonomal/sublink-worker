@@ -1,9 +1,8 @@
 # Sublink Worker
 
-Sublink Worker 是一个可部署在 Cloudflare Worker 上轻量级的订阅转换工具。它可以将各种代理协议的分享 URL 转换为不同客户端可用的订阅链接。同时还提供灵活的自定义规则与API支持。
+Sublink Worker 是一个可部署在 Cloudflare Worker 上，小而美的订阅转换工具。可以将各种代理协议的分享 URL 转换为不同客户端可用的订阅链接。同时还提供灵活的自定义规则与API支持。
 
-![image](/doc/img/main-1.png)
-
+演示站点：[https://sublink-worker.sageer.me](https://sublink-worker.sageer.me)
 ## 功能特点
 
 - 支持协议：ShadowSocks, VMess, VLESS, Hysteria2, Trojan, TUIC
@@ -13,19 +12,23 @@ Sublink Worker 是一个可部署在 Cloudflare Worker 上轻量级的订阅转�
   - Sing-Box
   - Clash
   - Xray/V2Ray
-- 支持短链接生成（基于 R2）
+- 支持固定/随机短链接生成（基于 KV）
 - 浅色/深色主题切换
 - 灵活的 API，支持脚本化操作
 - 用户友好的 Web 界面，灵活的自定义规则
   - 提供多种预定义规则集
   - 可自建关于geo-site, geo-ip, ip-cidr和domain-suffix的自定义策略组
 
+## 部署
 
-## 快速部署
-
+### 快速部署 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/7Sageer/sublink-worker)
 
-> 注意：确保你的 Cloudflare 账户已经开通 R2 存储服务
+### 手动部署
+- 克隆项目仓库：`git clone https://github.com/7Sageer/sublink-worker.git`
+- 安装依赖：`npm install`
+- 配置 Cloudflare 账户凭证
+- 使用 Wrangler 部署：`wrangler deploy`
 
 ## API 文档
 
@@ -40,38 +43,24 @@ Sublink Worker 是一个可部署在 Cloudflare Worker 上轻量级的订阅转�
 
 ## 最近更新
 
-### 2024-09-01
+- 2024-10-3
+  - 现在可以保存并管理自定义短链接
 
-- 自定义规则现在支持以下规则：
-  - domain_suffix
-  - ip_cidr
-  - geoip
-  - geosite
-
-### 2024-08-25
-
-- 修复 ClashMeta For Android 高于[v2.10.1]版本不显示规则集的问题
-
-### 2024-08-25
-
-- 优化web界面，修复部分显示错误
-
-### 2024-08-20
-
-- 新增：
-  - 自定义规则
-  - 自定义规则的 API 支持，详见 [API-doc.md](/doc/API-doc.md)
+[查看更新日志](/doc/update-log.md)
 
 ## 项目结构
 
-- `index.js`: 主要的服务器逻辑，处理请求路由
-- `BaseConfigBuilder.js`: 构建基础配置
-- `SingboxConfigBuilder.js`: 构建 Sing-Box 配置
-- `ClashConfigBuilder.js`: 构建 Clash 配置
-- `ProxyParsers.js`: 解析各种代理协议的 URL
-- `utils.js`: 提供各种实用函数
-- `htmlBuilder.js`: 生成 Web 界面的 HTML
-- `config.js`: 保存配置信息
+```
+.
+├── index.js                 # 主要的服务器逻辑，处理请求路由
+├── BaseConfigBuilder.js     # 构建基础配置
+├── SingboxConfigBuilder.js  # 构建 Sing-Box 配置
+├── ClashConfigBuilder.js    # 构建 Clash 配置
+├── ProxyParsers.js          # 解析各种代理协议的 URL
+├── utils.js                 # 提供各种实用函数
+├── htmlBuilder.js           # 生成 Web 界面的 HTML
+└── config.js                # 保存配置信息
+```
 
 ## 贡献
 

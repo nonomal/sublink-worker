@@ -23,11 +23,16 @@ export class ProxyParser {
             let parts = url.replace('ss://', '').split('#');
             let mainPart = parts[0];
             let tag = parts[1];
+            if (tag.includes('%')) {
+                tag = decodeURIComponent(tag);
+            }
         
             let [base64, serverPart] = mainPart.split('@');
-            let [method, password] = atob(base64).split(':');
+            let decodedParts = decodeBase64(base64).split(':');
+            let method = decodedParts[0];
+            let password = decodedParts.slice(1).join(':');
         
-            // 匹配 IPv6 地址
+            // Match IPv6 address
             let match = serverPart.match(/\[([^\]]+)\]:(\d+)/);
             let server, server_port;
         
@@ -54,7 +59,7 @@ export class ProxyParser {
 	class VmessParser {
 		parse(url) {
             let base64 = url.replace('vmess://', '')
-            let vmessConfig = JSON.parse(atob(base64))
+            let vmessConfig = JSON.parse(decodeBase64(base64))
             let tls = { "enabled": false }
             let transport = {}
             if (vmessConfig.net === 'ws') {
@@ -78,7 +83,7 @@ export class ProxyParser {
                 "server_port": parseInt(vmessConfig.port),
                 "uuid": vmessConfig.id,
                 "alter_id": parseInt(vmessConfig.aid),
-                "security": vmessConfig.scy,
+                "security": vmessConfig.scy || "auto",
                 "network": "tcp",
                 "tcp_fast_open": false,
                 "transport": transport,
@@ -170,8 +175,7 @@ export class ProxyParser {
       }
 
       class TuicParser {
-        //tuic://9a92c965-2c57-4040-8c83-330374e34424:9a92c965-2c57-4040-8c83-330374e34424@wawo33.qhr.icu:10876?sni=wawo33.qhr.icu&alpn=h3&congestion_control=bbr#HK-singbox_tuic
-
+        
         parse(url) {
           const { addressPart, params, name } = parseUrlParams(url);
           const [userinfo, serverInfo] = addressPart.split('@');
@@ -209,8 +213,20 @@ export class ProxyParser {
                 let decodedText;
                 try {
                     decodedText = decodeBase64(text.trim());
+                    // Check if the decoded text needs URL decoding
+                    if (decodedText.includes('%')) {
+                        decodedText = decodeURIComponent(decodedText);
+                    }
                 } catch (e) {
                     decodedText = text;
+                    // Check if the original text needs URL decoding
+                    if (decodedText.includes('%')) {
+                        try {
+                            decodedText = decodeURIComponent(decodedText);
+                        } catch (urlError) {
+                            console.warn('Failed to URL decode the text:', urlError);
+                        }
+                    }
                 }
                 return decodedText.split('\n').filter(line => line.trim() !== '');
             } catch (error) {

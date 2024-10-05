@@ -4,10 +4,11 @@ import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { DeepCopy } from './utils.js';
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules) {
+    constructor(inputString, selectedRules, customRules, pin) {
         super(inputString, CLASH_CONFIG);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
+        this.pin = pin;
     }
 
     addCustomItems(customItems) {
@@ -22,7 +23,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         let outbounds;
         if (typeof this.selectedRules === 'string' && PREDEFINED_RULE_SETS[this.selectedRules]) {
             outbounds = getOutbounds(PREDEFINED_RULE_SETS[this.selectedRules]);
-        } else if(this.selectedRules) {
+        } else if(this.selectedRules && Object.keys(this.selectedRules).length > 0) {
             outbounds = getOutbounds(this.selectedRules);
         } else {
             outbounds = getOutbounds(PREDEFINED_RULE_SETS.minimal);
@@ -50,7 +51,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                     proxies: ['🚀 节点选择', ...proxyList]
                 });
             } else {
-                this.config['proxy-groups'].push({
+                this.config['proxy-groups'].unshift({
                     type: "select",
                     name: outbound,
                     proxies: proxyList
@@ -75,14 +76,15 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         });
     }
     formatConfig() {
-        const rules = generateRules(this.selectedRules, this.customRules);
+        const rules = generateRules(this.selectedRules, this.customRules, this.pin);
 
         this.config.rules = rules.flatMap(rule => {
             const siteRules = rule.site_rules[0] !== '' ? rule.site_rules.map(site => `GEOSITE,${site},${rule.outbound}`) : [];
             const ipRules = rule.ip_rules[0] !== '' ? rule.ip_rules.map(ip => `GEOIP,${ip},${rule.outbound}`) : [];
             const domainSuffixRules = rule.domain_suffix ? rule.domain_suffix.map(suffix => `DOMAIN-SUFFIX,${suffix},${rule.outbound}`) : [];
+            const domainKeywordRules = rule.domain_keyword ? rule.domain_keyword.map(keyword => `DOMAIN-KEYWORD,${keyword},${rule.outbound}`) : [];
             const ipCidrRules = rule.ip_cidr ? rule.ip_cidr.map(cidr => `IP-CIDR,${cidr},${rule.outbound}`) : [];
-            return [...siteRules, ...ipRules, ...domainSuffixRules, ...ipCidrRules];
+            return [...siteRules, ...ipRules, ...domainSuffixRules, ...domainKeywordRules, ...ipCidrRules];
         });
 
         // Add the final catch-all rule
