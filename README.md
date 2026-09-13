@@ -1,92 +1,92 @@
-# Sublink Worker
+<div align="center">
+  <img src="public/favicon.png" alt="Sublink Worker" width="120" height="120"/>
 
-Sublink Worker 是一个可部署在 Cloudflare Worker 上轻量级的订阅转换工具。它可以将各种代理协议的分享 URL 转换为不同客户端可用的订阅链接。同时还提供灵活的自定义规则与API支持。
+  <h1><b>Sublink Worker</b></h1>
+  <h5><i>One Worker, All Subscriptions</i></h5>
 
-![image](/doc/img/main-1.png)
+  <p><b>A lightweight subscription converter and manager for proxy protocols, deployable on Cloudflare Workers, Vercel, Node.js, or Docker.</b></p>
 
-## 功能特点
+  <a href="https://trendshift.io/repositories/12291" target="_blank">
+    <img src="https://trendshift.io/api/badge/repositories/12291" alt="7Sageer%2Fsublink-worker | Trendshift" width="250" height="55"/>
+  </a>
 
-- 支持协议：ShadowSocks, VMess, VLESS, Hysteria2, Trojan, TUIC
-- 支持导入 Base64 的 http/https 订阅链接
-- 一键部署，Vanilla JS + Cloudflare Worker，无需后端
-- 支持客户端：
-  - Sing-Box
-  - Clash
-  - Xray/V2Ray
-- 支持短链接生成（基于 R2）
-- 浅色/深色主题切换
-- 灵活的 API，支持脚本化操作
-- 用户友好的 Web 界面，灵活的自定义规则
-  - 提供多种预定义规则集
-  - 可自建关于geo-site, geo-ip, ip-cidr和domain-suffix的自定义策略组
+  <br>
 
+<p style="display: flex; align-items: center; gap: 10px;">
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/7Sageer/sublink-worker">
+    <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers" style="height: 32px;"/>
+  </a>
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/7Sageer/sublink-worker&env=KV_REST_API_URL,KV_REST_API_TOKEN&envDescription=Vercel%20KV%20credentials%20for%20data%20storage&envLink=https://vercel.com/docs/storage/vercel-kv">
+    <img src="https://vercel.com/button" alt="Deploy to Vercel" style="height: 32px;"/>
+  </a>
+</p>
 
-## 快速部署
+  <h3>📚 Documentation</h3>
+  <p>
+    <a href="https://app.sublink.works"><b>⚡ Live Demo</b></a> ·
+    <a href="https://sublink.works/en/"><b>Documentation</b></a> 
+    <a href="https://sublink.works"><b>中文文档</b></a>·
+  </p>
+  <p>
+    <a href="https://sublink.works/guide/quick-start/">Quick Start</a> ·
+    <a href="https://sublink.works/api/">API Reference</a> ·
+    <a href="https://sublink.works/guide/faq/">FAQ</a>
+  </p>
+</div>
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/7Sageer/sublink-worker)
+## 🚀 Quick Start
 
-> 注意：确保你的 Cloudflare 账户已经开通 R2 存储服务
+### One-Click Deployment
+- Choose a "deploy" button above to click
+- That's it! See the [Document](https://sublink.works/guide/quick-start/) for more information.
 
-## API 文档
+### Alternative Runtimes
+- **Node.js**: `npm run build:node && node dist/node-server.cjs`
+- **Vercel**: `vercel deploy` (configure KV in project settings)
+- **Docker**: `docker pull ghcr.io/7sageer/sublink-worker:latest`
+- **Docker Compose**: `docker compose up -d` (includes Redis)
 
-详细的 API 文档可以在 [API-doc.md](/doc/API-doc.md) 中找到。
+## ✨ Features
 
-主要端点包括：
+### Supported Protocols
+ShadowSocks • VMess • VLESS • Hysteria2 • Trojan • TUIC
 
-- `/singbox`：生成 Sing-Box 配置
-- `/clash`：生成 Clash 配置
-- `/xray`：生成 Xray 配置
-- `/shorten`：生成短链接
+### Client Support
+Sing-Box • Clash • Xray/V2Ray • Surge
 
-## 最近更新
+### Input Support
+- Base64 subscriptions
+- HTTP/HTTPS subscriptions
+- Full configs (Sing-Box JSON, Clash YAML, Surge INI)
 
-### 2024-09-01
+### Core Capabilities
+- Import subscriptions from multiple sources
+- Generate fixed/random short links (KV-based)
+- Light/Dark theme toggle
+- Flexible API for script automation
+- Multi-language support (Chinese, English, Persian, Russian)
+- Web interface with predefined rule sets and customizable policy groups
 
-- 自定义规则现在支持以下规则：
-  - domain_suffix
-  - ip_cidr
-  - geoip
-  - geosite
+## 🤝 Contributing
 
-### 2024-08-25
+Issues and Pull Requests are welcome to improve this project.
 
-- 修复 ClashMeta For Android 高于[v2.10.1]版本不显示规则集的问题
+## 📄 License
 
-### 2024-08-25
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- 优化web界面，修复部分显示错误
+## ⚠️ Disclaimer
 
-### 2024-08-20
+This project is for learning and exchange purposes only. Please do not use it for illegal purposes. All consequences resulting from the use of this project are solely the responsibility of the user and are not related to the developer.
 
-- 新增：
-  - 自定义规则
-  - 自定义规则的 API 支持，详见 [API-doc.md](/doc/API-doc.md)
+## ⭐ Star History
 
-## 项目结构
+Thanks to everyone who has starred this project! 🌟
 
-- `index.js`: 主要的服务器逻辑，处理请求路由
-- `BaseConfigBuilder.js`: 构建基础配置
-- `SingboxConfigBuilder.js`: 构建 Sing-Box 配置
-- `ClashConfigBuilder.js`: 构建 Clash 配置
-- `ProxyParsers.js`: 解析各种代理协议的 URL
-- `utils.js`: 提供各种实用函数
-- `htmlBuilder.js`: 生成 Web 界面的 HTML
-- `config.js`: 保存配置信息
-
-## 贡献
-
-欢迎提交 Issues 和 Pull Requests 来改进这个项目。
-
-## 许可证
-
-这个项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 免责声明
-
-本项目仅供学习交流使用，请勿用于非法用途。使用本项目所造成的一切后果由使用者自行承担，与开发者无关。
-
-## Star History
-
-感谢所有为本项目点亮 Star 的朋友们！🌟
-
-[![Star History Chart](https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date)](https://star-history.com/#7Sageer/sublink-worker&Date)
+<a href="https://star-history.com/#7Sageer/sublink-worker&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date" />
+ </picture>
+</a>
